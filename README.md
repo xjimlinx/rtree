@@ -5,11 +5,11 @@
 使用方法：
 
 ```bash
-Usage: tree [OPTION] [DIRECTORY]
+Usage: rtree [OPTION] [DIRECTORY]
 Options:
-  -h, --help               Print this help message
-  --depth=DEPTH            Set the maximum depth of the tree (default: 0)
-  --all                    Show hidden files and directories
+-h, --help                     Print this help message
+--depth DEPTH, -L DEPTH        Set the maximum depth of the tree (default: 0)
+--all, -a                      Show hidden files and directories
 ```
 
 编译：
@@ -27,5 +27,5 @@ make test
 安装（将安装到 `/usr/bin 目录下`）：
 
 ```bash
-make install
+make install MODE=release
 ```

@@ -1,0 +1,39 @@
+.\" Manpage for rtree
+.TH RTREE 1 "November 2024" "Rtree 0.9.0" "Rtree Tool Documentation"
+.SH NAME
+rtree \- A simplified version of the tree command for listing directories
+.SH SYNOPSIS
+.B rtree
+[\fIoptions\fR] [\fIdirectory\fR]
+.SH DESCRIPTION
+.B rtree
+is a simple command-line tool written in Rust that prints the directory tree structure in a human-readable format.
+It lists files and directories in a tree-like structure, with options for limiting the depth of the listing and showing hidden files.
+
+.SH OPTIONS
+.TP
+.B \-h, \--help
+Print this help message and exit.
+.TP
+.B \--depth DEPTH, \-L DEPTH
+Set the maximum depth of the tree. A value of 0 means no limit (default: 0).
+.TP
+.B \--all, \-a
+Show hidden files and directories (those starting with a dot).
+.SH EXAMPLES
+.TP
+.B rtree
+List the directory tree of the current directory, without any depth limit and excluding hidden files.
+.TP
+.B rtree \-L 2
+List the directory tree up to a depth of 2.
+.TP
+.B rtree \-a
+List the directory tree of the current directory, including hidden files and directories.
+.TP
+.B rtree \-L 3 /path/to/directory
+List the directory tree of a specified directory up to a depth of 3.
+.SH SEE ALSO
+tree(1), ls(1)
+.SH AUTHOR
+Xein (1021538027@qq.com)

@@ -1,0 +1,9 @@
+[package]
+name = "rtree"
+version = "0.1.0"
+edition = "2021"
+authors = ["xein <1021538027@qq.com>"]
+license = "MIT-LICENSE"
+
+[dependencies]
+colored = "2.1.0"

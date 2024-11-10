@@ -7,7 +7,25 @@ use std::io::ErrorKind;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
+struct TreePrintArgs {
+    is_print_tree: bool,
+    is_directory_only: bool,
+    is_file_only: bool,
+    max_depth: usize,
+    show_hidden: bool,
+    directory: Option<String>,
+}
+
+const EXIT_VAL: TreePrintArgs = TreePrintArgs {
+    is_print_tree: false,
+    max_depth: 0,
+    show_hidden: false,
+    directory: None,
+    is_directory_only: false,
+    is_file_only: false,
+};
 /// 文件类型
+
 enum FileType {
     File,
     Directory,
@@ -21,12 +39,15 @@ enum FileType {
 /// depth：打印深度
 /// max_depth：根节点打印深度
 /// show_hidden：是否打印隐藏文件
+/// is_directory_only：是否只打印目录
 fn print_tree(
     dir: &Path,
     prefix: String,
     depth: usize,
     max_depth: usize,
     show_hidden: bool,
+    is_directory_only: bool,
+    is_file_only: bool,
 ) -> io::Result<()> {
     // 如果最大层数不等于0并且打印层数大于最大打印层数
     // （最大层数等于0的时候即不限制打印层数）
@@ -54,13 +75,28 @@ fn print_tree(
             return Ok(()); // 返回空，防止程序崩溃
         }
     };
-    // filter从闭包获取该目录下的文件
-    // 该闭包会对隐藏文件（即开头为'.'字符的文件）进行过滤
-    // 当 show_hidden == true 时，
-    // 条件全为真，也就是所有文件都会打印
     let mut entries = entries
+        // filter_map 即 filter 和 map 的结合
+        // 此处 filter_map 的作用是过滤掉错误的结果
         .filter_map(Result::ok)
+        // 过滤器，只打印非隐藏文件，由变量 show_hidden 控制
         .filter(|e| show_hidden || !e.file_name().to_string_lossy().starts_with('.'))
+        // 过滤器，只打印目录，由变量 is_directory_only 控制
+        .filter(|e| {
+            if is_directory_only {
+                e.path().is_dir()
+            } else {
+                true
+            }
+        })
+        // 过滤器，只打印文件，由变量 is_file_only 控制
+        .filter(|e| {
+            if is_file_only {
+                e.path().is_file()
+            } else {
+                true
+            }
+        })
         .collect::<Vec<_>>();
 
     // 对文件项按字母顺序排序
@@ -137,7 +173,15 @@ fn print_tree(
             } else {
                 format!("{}│   ", prefix)
             };
-            print_tree(&path, new_prefix, depth + 1, max_depth, show_hidden)?;
+            print_tree(
+                &path,
+                new_prefix,
+                depth + 1,
+                max_depth,
+                show_hidden,
+                is_directory_only,
+                is_file_only,
+            )?;
         }
     }
     Ok(())
@@ -149,12 +193,14 @@ fn print_tree(
 /// max_depth: 打印层数，最小为1，默认全部（0）
 /// show_hidden: 是否打印隐藏文件，默认为0,不打印，为1时打印
 /// directory: 要打印的目录，如果没有提供则为 None
-fn parse_args() -> (bool, usize, bool, Option<String>) {
+fn parse_args() -> TreePrintArgs {
     let args: Vec<String> = env::args().collect();
     let mut max_depth = 0;
     let mut show_hidden = false;
     let mut directory = None;
     let mut i = 1;
+    let mut is_directory_only = false;
+    let mut is_file_only = false;
 
     while i < args.len() {
         match args[i].as_str() {
@@ -169,7 +215,7 @@ fn parse_args() -> (bool, usize, bool, Option<String>) {
                             "Tip".color("green").on_bright_white(),
                             args[i]
                         );
-                        return (false, 0, false, None);
+                        return EXIT_VAL;
                     }
                 } else {
                     println!(
@@ -177,36 +223,29 @@ fn parse_args() -> (bool, usize, bool, Option<String>) {
                         "Tip".color("green").on_bright_white(),
                         args[i]
                     );
-                    return (false, 0, false, None);
+                    return EXIT_VAL;
                 }
             }
             "--all" | "-a" => {
                 show_hidden = true;
             }
-            "-v" | "--version" => {
-                println!("rtree v{} © 2024 by {}", env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_AUTHORS"));
-                return (false, 0, false, None);
+            "-d" | "--directory" => {
+                is_directory_only = true;
+            }
+            "--fileonly" => {
+                is_file_only = true;
+            }
+            "-V" | "--version" => {
+                println!(
+                    "rtree v{} © 2024 by {}",
+                    env!("CARGO_PKG_VERSION"),
+                    env!("CARGO_PKG_AUTHORS")
+                );
+                return EXIT_VAL;
             }
             "-h" | "--help" => {
-                println!("Usage: rtree [OPTION] [DIRECTORY]");
-                println!("       rtree [DIRECTORY] [OPTION]");
-                println!();
-                println!("Options:");
-                println!("{:<30} {}", "-h, --help", "Print this help message");
-                println!(
-                    "{:<30} {}",
-                    "--depth DEPTH, -L DEPTH", "Set the maximum depth of the tree (default: 0)"
-                );
-                println!(
-                    "{:<30} {}",
-                    "--all, -a", "Show hidden files and directories"
-                );
-                println!(
-                    "{:<30} {}",
-                    "[DIRECTORY]", "The directory to list (default: current directory)"
-                );
-                println!("{:<30} {}", "-v, --version", "Print the version of rtree");
-                return (false, 0, false, None);
+                print_help_msg();
+                return EXIT_VAL;
             }
             _ => {
                 // 如果都不是，表示这是要打印的目录
@@ -221,22 +260,56 @@ fn parse_args() -> (bool, usize, bool, Option<String>) {
                             "Tip".color("green").on_bright_white(),
                             path.display()
                         );
-                        return (false, 0, false, None);
+                        return EXIT_VAL;
                     } else if !path.is_dir() {
                         println!(
                             "{}: '{}' is not a valid directory.",
                             "Tip".color("green").on_bright_white(),
                             path.display()
                         );
-                        return (false, 0, false, None);
+                        return EXIT_VAL;
                     }
                 }
             }
         }
         i += 1;
     }
+    if is_directory_only && is_file_only {
+        println!("{}: You can't specify both --directory and --fileonly.", "Tip".color("green").on_bright_white());
+        return EXIT_VAL;
+    }
+    let ret = TreePrintArgs {
+        max_depth,
+        show_hidden,
+        directory,
+        is_directory_only,
+        is_file_only,
+        is_print_tree: true,
+    };
+    ret
+}
 
-    (true, max_depth, show_hidden, directory)
+fn print_help_msg() {
+    println!("Usage: rtree [OPTION] [DIRECTORY]");
+    println!("       rtree [DIRECTORY] [OPTION]");
+    println!();
+    println!("Options:");
+    println!("{:<30} {}", "-h, --help", "Print this help message");
+    println!(
+        "{:<30} {}",
+        "[DIRECTORY]", "The directory to list (default: current directory)"
+    );
+    println!(
+        "{:<30} {}",
+        "--depth DEPTH, -L DEPTH", "Set the maximum depth of the tree (default: 0)"
+    );
+    println!(
+        "{:<30} {}",
+        "--all, -a", "Show hidden files and directories"
+    );
+    println!("{:<30} {}", "-d, --directory", "List directories only");
+    println!("{:<30} {}", "--fileonly", "List files only");
+    println!("{:<30} {}", "-V, --version", "Print the version of rtree");
 }
 
 fn main() -> io::Result<()> {
@@ -244,7 +317,18 @@ fn main() -> io::Result<()> {
     // is_print_tree: 是否打印
     // max_depth: 打印层数，最小为1，默认全部（0）
     // show_hidden: 是否打印隐藏文件，默认为0,不打印，为1时打印
-    let (is_print_tree, max_depth, show_hidden, directory) = parse_args();
+    // directory: 要打印的目录，如果没有提供则为 None
+    // is_directory_only: 仅列出目录
+    // is_file_only: 仅列出文件
+    let ret_args = parse_args();
+    let (is_print_tree, max_depth, show_hidden, directory, is_directory_only, is_file_only) = (
+        ret_args.is_print_tree,
+        ret_args.max_depth,
+        ret_args.show_hidden,
+        ret_args.directory,
+        ret_args.is_directory_only,
+        ret_args.is_file_only,
+    );
 
     // 如果不打印，直接返回
     if is_print_tree == false {
@@ -264,6 +348,14 @@ fn main() -> io::Result<()> {
     }
     // println!("{}", current_dir.display());
     // 递归打印目录下文件
-    print_tree(&print_dir, String::new(), 1, max_depth, show_hidden)?;
+    print_tree(
+        &print_dir,
+        String::new(),
+        1,
+        max_depth,
+        show_hidden,
+        is_directory_only,
+        is_file_only,
+    )?;
     Ok(())
 }

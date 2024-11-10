@@ -1,6 +1,6 @@
 NAME := rtree
 MODE ?= debug
-VERSION ?= 0.0.1
+VERSION ?= 0.9.1
 
 TARGET ?= ${NAME}
 TARGET_PATH := target/${MODE}/${TARGET}
@@ -31,6 +31,15 @@ test: build
 	@echo Start to Test ${NAME}, Version ${VERSION}
 	@echo ------ Test1 HELP-TEST ------
 	@./${NAME} -h
+	@echo ------ Test2 VERSION-TEST ------
+	@./${NAME} -V
+	@echo ------ Test3 DIRECTORY-ONLY-TEST ------
+	@./${NAME} -d
+	@echo ------ Test4 FILE-ONLY-TEST ------
+	@./${NAME} --fileonly
+	@echo ------ Test5 ALL-LIST-TEST ------
+	@./${NAME} -a
+	@# TODO:
 
 # 安装目标
 install: build

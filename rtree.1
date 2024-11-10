@@ -1,5 +1,5 @@
 .\" Manpage for rtree
-.TH RTREE 1 "November 2024" "Rtree 0.9.0" "Rtree Tool Documentation"
+.TH RTREE 1 "November 2024" "Rtree 0.9.1" "Rtree Tool Documentation"
 .SH NAME
 rtree \- A simplified version of the tree command for listing directories
 .SH SYNOPSIS
@@ -12,7 +12,7 @@ It lists files and directories in a tree-like structure, with options for limiti
 
 .SH OPTIONS
 .TP
-.B \-h, \--help
+.B \--help, \-h
 Print this help message and exit.
 .TP
 .B \--depth DEPTH, \-L DEPTH
@@ -20,6 +20,15 @@ Set the maximum depth of the tree. A value of 0 means no limit (default: 0).
 .TP
 .B \--all, \-a
 Show hidden files and directories (those starting with a dot).
+.TP
+.B \--directory, \-d
+List directories only.
+.TP
+.B \--fileonly, \-d
+List files only.
+.TP
+.B \--version, \-V
+Show version information.
 .SH EXAMPLES
 .TP
 .B rtree

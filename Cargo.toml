@@ -1,8 +1,8 @@
 [package]
-name = "rtree"
+name = "rust-rtree"
 version = "0.9.5"
 edition = "2021"
-authors = ["xein <1021538027@qq.com>"]
+authors = ["Xein <1021538027@qq.com>"]
 license = "MIT"
 description = "A simplified version of the tree tool written in rust."
 repository = "https://github.com/xein/rtree"

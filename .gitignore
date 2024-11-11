@@ -4,3 +4,5 @@ rtree
 2
 /.VSCodeCounter
 *.exe
+*-debug
+*-release

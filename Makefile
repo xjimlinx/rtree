@@ -1,6 +1,6 @@
 NAME := rtree
 MODE ?= debug
-VERSION ?= 0.9.1
+VERSION ?= 0.9.5
 
 TARGET ?= ${NAME}
 TARGET_PATH := target/${MODE}/${TARGET}
@@ -71,7 +71,7 @@ install: build
 ifeq (${OS_TYPE}, Linux)
 # 安装可执行文件
 	@sudo $(INSTALL) -d $(PREFIX)/bin
-	@sudo $(INSTALL) -m 755 rtree $(PREFIX)/bin
+	sudo $(INSTALL) -m 755 ${TARGET_PATH} $(PREFIX)/bin
 # 安装 man 页面
 	@sudo $(INSTALL) -d $(MAN_DIR)
 	@sudo $(INSTALL) -m 644 $(MANPAGE_NAME) $(MAN_DIR)
@@ -80,5 +80,8 @@ else ifeq (${OS_TYPE}, Windows)
 else
 	@echo "ISNTALL: Unknown OS is not supported yet."
 endif
+
+clean:
+	@cargo clean
 
 .PHONY: build test install clean

@@ -1,14 +1,13 @@
 // TODO: 统计文件数目
 use colored::Colorize;
 use std::env;
-use std::ffi::OsStr;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
 #[cfg(target_family = "windows")]
-use std::os::windows::fs::MetadataExt;
+use std::ffi::OsStr;
 use std::path::Path;
 
 struct TreePrintArgs {

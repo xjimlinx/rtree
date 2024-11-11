@@ -4,7 +4,10 @@ use std::env;
 use std::fs;
 use std::io;
 use std::io::ErrorKind;
+#[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
+#[cfg(target_family = "windows")]
+use std::ffi::OsStr;
 use std::path::Path;
 
 struct TreePrintArgs {
@@ -152,12 +155,32 @@ fn print_tree(
                     FileType::Directory => "blue",
                     FileType::SymbolicLink => "bright cyan",
                     FileType::File => {
-                        // 0o111 = 0b001001001
-                        // 即对应 rwx权限的 --x--x--x
-                        if path.metadata()?.permissions().mode() & 0o111 != 0 {
-                            "green"
-                        } else {
-                            "white"
+                        #[cfg(target_family = "unix")]
+                        {
+                            // 0o111 = 0b001001001
+                            // 即对应 rwx权限的 --x--x--x
+                            if path.metadata()?.permissions().mode() & 0o111 != 0 {
+                                "green"
+                            } else {
+                                "white"
+                            }
+                        }
+                        #[cfg(target_family = "windows")]
+                        {
+                            // 对于 Windows 系统，通过文件扩展名来判断文件是否可执行
+                            let extension = path.extension().and_then(OsStr::to_str);
+                            // 常见的可执行文件扩展名
+                            let executable_extensions = ["exe", "bat", "cmd", "msi", "vbs", "ps1"];
+
+                            if let Some(ext) = extension {
+                                if executable_extensions.contains(&ext.to_lowercase().as_str()) {
+                                    "green" // 文件是可执行的
+                                } else {
+                                    "white" // 文件不是可执行的
+                                }
+                            } else {
+                                "white" // 文件不是可执行的
+                            }
                         }
                     }
                     FileType::Unknown => "yellow",
@@ -275,7 +298,10 @@ fn parse_args() -> TreePrintArgs {
         i += 1;
     }
     if is_directory_only && is_file_only {
-        println!("{}: You can't specify both --directory and --fileonly.", "Tip".color("green").on_bright_white());
+        println!(
+            "{}: You can't specify both --directory and --fileonly.",
+            "Tip".color("green").on_bright_white()
+        );
         return EXIT_VAL;
     }
     let ret = TreePrintArgs {

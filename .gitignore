@@ -1,7 +1,5 @@
 /target
-rtree
-1
-2
 /.VSCodeCounter
+*.exe
 *-debug
 *-release

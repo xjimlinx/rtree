@@ -3,7 +3,7 @@ MODE ?= debug
 VERSION ?= 0.9.5
 
 TARGET ?= ${NAME}
-TARGET_PATH := target/${MODE}/${TARGET}
+TARGET_PATH := target/${MODE}/rust-${TARGET}
 DESTINATION_PATH := ${TARGET}-${VERSION}-${MODE}
 
 PREFIX ?= /usr/local
@@ -71,7 +71,7 @@ install: build
 ifeq (${OS_TYPE}, Linux)
 # 安装可执行文件
 	@sudo $(INSTALL) -d $(PREFIX)/bin
-	sudo $(INSTALL) -m 755 ${TARGET_PATH} $(PREFIX)/bin
+	@sudo $(INSTALL) -m 755 ${TARGET_PATH} $(PREFIX)/bin/${NAME}
 # 安装 man 页面
 	@sudo $(INSTALL) -d $(MAN_DIR)
 	@sudo $(INSTALL) -m 644 $(MANPAGE_NAME) $(MAN_DIR)
